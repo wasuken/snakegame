@@ -1,6 +1,8 @@
+#include <stdio.h>
 #include <ncurses.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 #define KEY_ESC 27
 
@@ -34,6 +36,7 @@ struct Board {
 void initialize_board(struct Board *board, int width, int height);
 void draw_board(const struct Board *board);
 int update_snake_position(struct Board *board);
+int GetRandom(int min, int max);
 
 int main() {
   // ncursesの初期化
@@ -43,7 +46,7 @@ int main() {
   cbreak();
   keypad(stdscr, TRUE);
   curs_set(0);
-  timeout(100); // 0.1秒ごとにgetch()を非ブロッキングで呼び出す
+  timeout(500); // 0.1秒ごとにgetch()を非ブロッキングで呼び出す
 
   // ゲームボードのnn初期化
   struct Board board;
@@ -132,6 +135,8 @@ int update_snake_position(struct Board *board){
     move_y = 1;
     break;
   }
+  int last_x = board->snake.segments[0].x;
+  int last_y = board->snake.segments[0].y;
   board->snake.segments[0].x += move_x;
   board->snake.segments[0].y += move_y;
   // ゲームオーバー判定
@@ -140,8 +145,8 @@ int update_snake_position(struct Board *board){
      (board->snake.segments[0].x == board->snake.segments[board->snake.length].x && board->snake.segments[0].y == board->snake.segments[board->snake.length].y)){
     return -1;
   }
-  int last_x = board->snake.segments[0].x;
-  int last_y = board->snake.segments[0].y;
+  // food取得判定
+
 
   for(int i=1;i<board->snake.length;i++){
     int temp_last_x = board->snake.segments[i].x;
@@ -152,6 +157,28 @@ int update_snake_position(struct Board *board){
 
     last_x = temp_last_x;
     last_y = temp_last_y;
+  }
+  if(board->snake.segments[0].x == board->food.position.x &&
+     board->snake.segments[0].y == board->food.position.y){
+    // ヘビの長さを追加する
+    struct Point *temp = realloc(board->snake.segments, ((board->snake.length+1) * sizeof(struct Point)));
+    if(temp == NULL){
+      printf("Memory allocation falied.\n");
+      return -1;
+    }
+    struct Point *ptr = malloc(sizeof(struct Point));
+    ptr->x = last_x;
+    ptr->y = last_y;
+    board->snake.segments[board->snake.length+1] = *ptr;
+    board->snake.length++;
+    // 新food情報をboardにかきこむ
+    int fx = GetRandom(1, board->width-2);
+    int fy = GetRandom(1, board->height-2);
+    board->food.position.x = fx;
+    board->food.position.y = fy;
+
+    // score
+    board->score += 100;
   }
   return 0;
 }
@@ -202,4 +229,9 @@ void draw_board(const struct Board *board) {
   mvprintw(board->height, 0, "Score: %d", board->score);
   // 画面を更新
   refresh();
+}
+
+int GetRandom(int min, int max)
+{
+    return min + (int)(rand() * (max - min + 1.0) / (1.0 + RAND_MAX));
 }
