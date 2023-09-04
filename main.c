@@ -1,5 +1,6 @@
 #include <ncurses.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #define KEY_ESC 27
 
@@ -37,45 +38,69 @@ int update_snake_position(struct Board *board);
 int main() {
   // ncursesの初期化
   initscr();
+  start_color();
   noecho();
   cbreak();
   keypad(stdscr, TRUE);
+  curs_set(0);
   timeout(100); // 0.1秒ごとにgetch()を非ブロッキングで呼び出す
 
-  // ゲームボードの初期化
+  // ゲームボードのnn初期化
   struct Board board;
   initialize_board(&board, 20, 20);
 
   draw_board(&board);
-
   int key;
   while((key = getch()) != KEY_ESC){
     // ゲームボードの描画
-    nodelay(stdscr, FALSE);
-    // 一時停止（キー入力を待つ）
-
-    switch(key){
-    case KEY_UP:
-      board.snake.direction = 'U';
-      break;
-    case KEY_DOWN:
-      board.snake.direction = 'D';
-      break;
-    case KEY_LEFT:
-      board.snake.direction = 'L';
-      break;
-    case KEY_RIGHT:
-      board.snake.direction = 'R';
-      break;
+    // nodelay(stdscr, FALSE);
+    if(key != ERR){
+      switch(key){
+      case KEY_UP:
+	if(board.snake.direction == 'D'){
+	  endwin();
+	  free(board.snake.segments);
+	  return 0;
+	}
+	board.snake.direction = 'U';
+	break;
+      case KEY_DOWN:
+	if(board.snake.direction == 'U'){
+	  endwin();
+	  free(board.snake.segments);
+	  return 0;
+	}
+	board.snake.direction = 'D';
+	break;
+      case KEY_LEFT:
+	if(board.snake.direction == 'R'){
+	  endwin();
+	  free(board.snake.segments);
+	  return 0;
+	}
+	board.snake.direction = 'L';
+	break;
+      case KEY_RIGHT:
+	if(board.snake.direction == 'L'){
+	  endwin();
+	  free(board.snake.segments);
+	  return 0;
+	}
+	board.snake.direction = 'R';
+	break;
+      case KEY_ESC:
+	return 0;
+      }
     }
-
     int result = update_snake_position(&board);
-    draw_board(&board);
     if(result < 0){
       endwin();
       free(board.snake.segments);
       return 0;
     }
+
+    draw_board(&board);
+    mvprintw(0, board.width + 30, "top snake x: %d, y: %d", board.snake.segments[0].x, board.snake.segments[0].y);
   }
 
   // ncursesの終了処理
