@@ -2,7 +2,7 @@
 #include <ncurses.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <stdlib.h>
+#include <string.h>
 
 #define KEY_ESC 27
 
@@ -176,9 +176,10 @@ int update_snake_position(struct Board *board){
     struct Point *ptr = malloc(sizeof(struct Point));
     ptr->x = last_x;
     ptr->y = last_y;
-    board->snake.segments[board->snake.length+1] = *ptr;
+    board->snake.segments[board->snake.length] = *ptr;
     board->snake.length += 1;
     // 新food情報をboardにかきこむ
+    // TODO 蛇の体以外に配置する関数にする
     int fx = GetRandom(1, board->width-2);
     int fy = GetRandom(1, board->height-2);
     board->food.position.x = fx;
@@ -222,10 +223,30 @@ void draw_board(const struct Board *board) {
       }
     }
   }
-  mvaddch(board->snake.segments[0].y, board->snake.segments[0].x, board->snake.direction);
+  // char str[1000] = "";
+  // for (int i = 0; i < board->snake.length; i++) {
+  //   char si[10] = "";
+  //   snprintf(si, 10, "%d", i);
+  //   char sx[10] = "";
+  //   snprintf(sx, 10, "%d", board->snake.segments[i].x);
+  //   char sy[10] = "";
+  //   snprintf(sy, 10, "%d", board->snake.segments[i].y);
+  //
+  //   strcat(str, "num of ");
+  //   strcat(str, si);
+  //   strcat(str, ":");
+  //   strcat(str, sx);
+  //   strcat(str, ",");
+  //   strcat(str, sy);
+  //   strcat(str, "|");
+  // }
+  // mvprintw(10, board->width + 50, str);
+  char direction[1];
+  direction[0] = board->snake.direction;
+  mvprintw(board->snake.segments[0].y, board->snake.segments[0].x, direction);
   if(board->snake.length > 1){
     // スネークを描画
-    for (int i = 1; i < board->snake.length; ++i) {
+    for (int i = 1; i < board->snake.length; i++) {
       mvprintw(board->snake.segments[i].y, board->snake.segments[i].x, "O");
     }
   }
