@@ -103,7 +103,8 @@ int main() {
     }
 
     draw_board(&board);
-    mvprintw(0, board.width + 30, "top snake x: %d, y: %d", board.snake.segments[0].x, board.snake.segments[0].y);
+    // mvprintw(0, board.width + 30, "top snake x: %d, y: %d", board.snake.segments[0].x, board.snake.segments[0].y);
+    mvprintw(0, board.width + 30, "snake length: %d", board.snake.length);
   }
 
   // ncursesの終了処理
@@ -139,16 +140,21 @@ int update_snake_position(struct Board *board){
   int last_y = board->snake.segments[0].y;
   board->snake.segments[0].x += move_x;
   board->snake.segments[0].y += move_y;
-  // ゲームオーバー判定
+
+
+  // ゲームオーバー判定(画面外判定)
   if((board->snake.segments[0].x >= (board->width - 1) || board->snake.segments[0].y >= (board->height - 1)) ||
-     (board->snake.segments[0].x < 1 || board->snake.segments[0].y < 1) ||
-     (board->snake.segments[0].x == board->snake.segments[board->snake.length].x && board->snake.segments[0].y == board->snake.segments[board->snake.length].y)){
+     (board->snake.segments[0].x < 1 || board->snake.segments[0].y < 1)){
     return -1;
   }
-  // food取得判定
 
-
+  // 移動後処理とゲームオーバー判定(体あたり判定)を同時におこなう
   for(int i=1;i<board->snake.length;i++){
+    // ゲームオーバー判定(体あたり判定)
+    if(board->snake.segments[0].x == board->snake.segments[i].x && board->snake.segments[0].y == board->snake.segments[i].y){
+      return -1;
+    }
+    // 移動後処理
     int temp_last_x = board->snake.segments[i].x;
     int temp_last_y = board->snake.segments[i].y;
 
@@ -161,16 +167,17 @@ int update_snake_position(struct Board *board){
   if(board->snake.segments[0].x == board->food.position.x &&
      board->snake.segments[0].y == board->food.position.y){
     // ヘビの長さを追加する
-    struct Point *temp = realloc(board->snake.segments, ((board->snake.length+1) * sizeof(struct Point)));
+    struct Point *temp = realloc(board->snake.segments, ((board->snake.length + 2) * sizeof(struct Point)));
     if(temp == NULL){
       printf("Memory allocation falied.\n");
       return -1;
     }
+    board->snake.segments = temp;
     struct Point *ptr = malloc(sizeof(struct Point));
     ptr->x = last_x;
     ptr->y = last_y;
     board->snake.segments[board->snake.length+1] = *ptr;
-    board->snake.length++;
+    board->snake.length += 1;
     // 新food情報をboardにかきこむ
     int fx = GetRandom(1, board->width-2);
     int fy = GetRandom(1, board->height-2);
