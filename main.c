@@ -167,7 +167,7 @@ int update_snake_position(struct Board *board){
   if(board->snake.segments[0].x == board->food.position.x &&
      board->snake.segments[0].y == board->food.position.y){
     // ヘビの長さを追加する
-    struct Point *temp = realloc(board->snake.segments, ((board->snake.length + 2) * sizeof(struct Point)));
+    struct Point *temp = realloc(board->snake.segments, ((board->snake.length + 1) * sizeof(struct Point)));
     if(temp == NULL){
       printf("Memory allocation falied.\n");
       return -1;
